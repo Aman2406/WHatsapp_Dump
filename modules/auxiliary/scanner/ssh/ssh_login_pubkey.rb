@@ -1,11 +1,12 @@
 ##
-# This module requires Metasploit: http//metasploit.com/download
+# This module requires Metasploit: http://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
 require 'msf/core'
 require 'net/ssh'
 require 'metasploit/framework/login_scanner/ssh'
+require 'metasploit/framework/credential_collection'
 
 class Metasploit3 < Msf::Auxiliary
 
@@ -222,12 +223,16 @@ class Metasploit3 < Msf::Auxiliary
           session_setup(result, scanner.ssh_socket)
           :next_user
         when Metasploit::Model::Login::Status::UNABLE_TO_CONNECT
-          print_brute :level => :verror, :ip => ip, :msg => "Could not connect"
+          if datastore['VERBOSE']
+            print_brute :level => :verror, :ip => ip, :msg => "Could not connect"
+          end
           scanner.ssh_socket.close if scanner.ssh_socket && !scanner.ssh_socket.closed?
           invalidate_login(credential_data)
           :abort
         when Metasploit::Model::Login::Status::INCORRECT
-          print_brute :level => :verror, :ip => ip, :msg => "Failed: '#{result.credential}'"
+          if datastore['VERBOSE']
+            print_brute :level => :verror, :ip => ip, :msg => "Failed: '#{result.credential}'"
+          end
           invalidate_login(credential_data)
           scanner.ssh_socket.close if scanner.ssh_socket && !scanner.ssh_socket.closed?
         else

@@ -1,11 +1,12 @@
 ##
-# This module requires Metasploit: http//metasploit.com/download
+# This module requires Metasploit: http://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
 
 require 'msf/core'
 require 'metasploit/framework/login_scanner/axis2'
+require 'metasploit/framework/credential_collection'
 
 class Metasploit3 < Msf::Auxiliary
 
@@ -39,21 +40,23 @@ class Metasploit3 < Msf::Auxiliary
 
     register_options( [
       Opt::RPORT(8080),
-      OptString.new('URI', [false, 'Path to the Apache Axis Administration page', '/axis2/axis2-admin/login']),
+      OptString.new('TARGETURI', [false, 'Path to the Apache Axis Administration page', '/axis2/axis2-admin/login']),
     ], self.class)
   end
 
+  # For print_* methods
   def target_url
     "http://#{vhost}:#{rport}#{datastore['URI']}"
   end
 
   def run_host(ip)
+    uri = normalize_uri(target_uri.path)
 
     print_status("Verifying login exists at #{target_url}")
     begin
       send_request_cgi({
         'method'  => 'GET',
-        'uri'     => datastore['URI']
+        'uri'     => uri
       }, 20)
     rescue
       print_error("The Axis2 login page does not exist at #{target_url}")
@@ -77,11 +80,13 @@ class Metasploit3 < Msf::Auxiliary
     scanner = Metasploit::Framework::LoginScanner::Axis2.new(
       host: ip,
       port: rport,
-      uri: datastore['URI'],
+      uri: uri,
       proxies: datastore["PROXIES"],
       cred_details: cred_collection,
       stop_on_success: datastore['STOP_ON_SUCCESS'],
       connection_timeout: 5,
+      user_agent: datastore['UserAgent'],
+      vhost: datastore['VHOST']
     )
 
     scanner.scan! do |result|
@@ -98,11 +103,15 @@ class Metasploit3 < Msf::Auxiliary
         create_credential_login(credential_data)
         :next_user
       when Metasploit::Model::Login::Status::UNABLE_TO_CONNECT
-        print_brute :level => :verror, :ip => ip, :msg => "Could not connect"
+        if datastore['VERBOSE']
+          print_brute :level => :verror, :ip => ip, :msg => "Could not connect"
+        end
         invalidate_login(credential_data)
         :abort
       when Metasploit::Model::Login::Status::INCORRECT
-        print_brute :level => :verror, :ip => ip, :msg => "Failed: '#{result.credential}'"
+        if datastore['VERBOSE']
+          print_brute :level => :verror, :ip => ip, :msg => "Failed: '#{result.credential}'"
+        end
         invalidate_login(credential_data)
       end
     end
