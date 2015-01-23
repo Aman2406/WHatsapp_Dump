@@ -12,6 +12,16 @@ require 'time'
 
 CHECK_OLD_RUBIES = !!ENV['MSF_CHECK_OLD_RUBIES']
 SUPPRESS_INFO_MESSAGES = !!ENV['MSF_SUPPRESS_INFO_MESSAGES']
+TITLE_WHITELIST = %w{
+  a an and as at avserve callmenum configdir connect debug docbase dtspcd
+  execve file for from getinfo goaway gsad hetro historysearch htpasswd ibstat
+  id in inetd iseemedia jhot libxslt lmgrd lnk load main map migrate mimencode
+  multisort name net netcat nodeid ntpd nttrans of on onreadystatechange or
+  ovutil path pbot pfilez pgpass pingstr pls popsubfolders prescan readvar
+  relfile rev rexec rlogin rsh rsyslog sa sadmind say sblistpack spamd
+  sreplace tagprinter the tnftp to twikidraw udev uplay user username via
+  welcome with ypupdated zsudo
+}
 
 if CHECK_OLD_RUBIES
   require 'rvm'
@@ -419,21 +429,10 @@ class Msftidy
   end
 
   def check_title_casing
-    whitelist = %w{
-      a an and as at avserve callmenum configdir connect debug docbase dtspcd
-      execve file for from getinfo goaway gsad hetro historysearch htpasswd
-      ibstat id in inetd iseemedia jhot libxslt lmgrd lnk load main map
-      migrate mimencode multisort name net netcat nodeid ntpd nttrans of
-      on onreadystatechange or ovutil path pbot pfilez pgpass pingstr pls
-      popsubfolders prescan readvar relfile rev rexec rlogin rsh rsyslog sa
-      sadmind say sblistpack spamd sreplace tagprinter the to twikidraw udev
-      uplay user username via welcome with ypupdated zsudo
-    }
-
     if @source =~ /["']Name["'][[:space:]]*=>[[:space:]]*['"](.+)['"],*$/
       words = $1.split
       words.each do |word|
-        if whitelist.include?(word)
+        if TITLE_WHITELIST.include?(word)
           next
         elsif word =~ /^[a-z]+$/
           warn("Suspect capitalization in module title: '#{word}'")
@@ -595,21 +594,9 @@ class Msftidy
   def check_invalid_url_scheme
     test = @source.scan(/^#.+http\/\/(?:www\.)?metasploit.com/)
     unless test.empty?
-      test.each do |item|
+      test.each { |item|
         info("Invalid URL: #{item}")
-      end
-    end
-  end
-
-  # This checks looks for extranous commas
-  # Stuff with comments should match too: , #metasploit module ]
-  # but it should not match interpolation #{
-  def check_comma
-    test = @source.scan(/[^\n]+,(?:\s*#[^{][^\n]+)?\s*[\]\}]/)
-    unless test.empty?
-      test.each do |item|
-        info("Extraneous comma: #{item}")
-      end
+      }
     end
   end
 
@@ -662,7 +649,6 @@ def run_checks(full_filepath)
   tidy.check_sock_get
   tidy.check_udp_sock_get
   tidy.check_invalid_url_scheme
-  tidy.check_comma
   return tidy
 end
 
