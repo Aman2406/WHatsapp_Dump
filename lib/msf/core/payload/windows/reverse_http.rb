@@ -16,6 +16,7 @@ module Msf
 
 module Payload::Windows::ReverseHttp
 
+  include Msf::Payload::Windows
   include Msf::Payload::Windows::BlockApi
   include Msf::Payload::Windows::Exitfunk
 
@@ -86,6 +87,13 @@ module Payload::Windows::ReverseHttp
     end
 
     "/" + generate_uri_checksum(Msf::Handler::ReverseHttp::URI_CHECKSUM_INITW, uri_req_len)
+  end
+
+  #
+  # Generate the URI for the initial stager
+  #
+  def generate_small_uri
+    "/" + generate_uri_checksum(Msf::Handler::ReverseHttp::URI_CHECKSUM_INITW)
   end
 
   #
