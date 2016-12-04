@@ -63,14 +63,7 @@ class Output < Rex::Ui::Output
   end
 
   def print_line(msg = '')
-    print("\033[s") # Save cursor position
-    print("\r\033[K" + msg + "\n")
-    if input and input.prompt
-      print("\r\033[K")
-      print(input.prompt)
-      print(input.line_buffer)
-      print("\033[u\033[B") # Restore cursor, move down one line
-    end
+   print(msg + "\n")
   end
 
   def print_warning(msg = '')
