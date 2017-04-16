@@ -5,6 +5,7 @@ gemspec name: 'metasploit-framework'
 
 gem 'bit-struct', git: 'https://github.com/busterb/bit-struct', branch: 'ruby-2.4'
 gem 'method_source', git: 'https://github.com/banister/method_source', branch: 'master'
+gem 'rubyntlm', git: 'https://github.com/WinRb/rubyntlm', branch: 'master'
 
 # separate from test as simplecov is not run on travis-ci
 group :coverage do
@@ -21,6 +22,9 @@ group :development do
   gem 'pry', git: 'https://github.com/pry/pry', branch: 'master'
   # module documentation
   gem 'octokit'
+  # metasploit-aggregator as a framework only option for now
+  # Metasploit::Aggregator external session proxy
+  gem 'metasploit-aggregator'
 end
 
 group :development, :test do
